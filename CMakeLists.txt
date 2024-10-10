@@ -52,7 +52,7 @@ endif()
 
 include(ExternalProject)
 
-set(ALGLIB_VERSION_FILE "4.03.0")
+set(ALGLIB_VERSION_FILE "3.14.0")
 string(REPLACE "\"" "" ALGLIB_VERSION ${ALGLIB_VERSION_FILE})
 set(ALGLIB_FILE alglib-${ALGLIB_VERSION_FILE}.cpp.gpl.tgz)
 set(ALGLIB_URI http://www.alglib.net/translator/re/${ALGLIB_FILE})
@@ -60,7 +60,7 @@ set(ALGLIB_DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(ALGLIB_FULL_PATH ${ALGLIB_DOWNLOAD_DIR}/${ALGLIB_FILE})
 
 set(UNZIP_DIR "${ALGLIB_DOWNLOAD_DIR}/src")
-set(ALGLIB_SRC_DIR "${UNZIP_DIR}/alglib-cpp/src")
+set(ALGLIB_SRC_DIR "${UNZIP_DIR}/alglib-cpp/src")  # change this to ${UNZIP_DIR}/alglib-cpp/src for later versions
 
 if (NOT EXISTS ${ALGLIB_FULL_PATH})
     file(DOWNLOAD ${ALGLIB_URI} ${ALGLIB_FULL_PATH} SHOW_PROGRESS STATUS DL_STATUS)
