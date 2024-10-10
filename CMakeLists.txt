@@ -79,7 +79,7 @@ endif()
 file(GLOB ALGLIB_HEADERS "${UNZIP_DIR}/cpp/src/*.h")
 file(GLOB ALGLIB_SOURCES "${UNZIP_DIR}/cpp/src/*.cpp")
 
-add_library(${libraryname} ${ALGLIB_HEADERS} ${ALGLIB_SOURCES})
+add_library(${libraryname} STATIC ${ALGLIB_SOURCES})
 set_property(TARGET ${libraryname} PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 set(COMPILER_OPTIONS)
