@@ -8,7 +8,7 @@
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.9)
 
 project(ALGLIB VERSION 4.03.0)
 
@@ -52,12 +52,15 @@ endif()
 
 include(ExternalProject)
 
-set(ALGLIB_VERSION_FILE "4.03.0" CACHE STRING "Version of ALGLIB.")
+set(ALGLIB_VERSION_FILE "4.03.0")
 string(REPLACE "\"" "" ALGLIB_VERSION ${ALGLIB_VERSION_FILE})
 set(ALGLIB_FILE alglib-${ALGLIB_VERSION_FILE}.cpp.gpl.tgz)
 set(ALGLIB_URI http://www.alglib.net/translator/re/${ALGLIB_FILE})
 set(ALGLIB_DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(ALGLIB_FULL_PATH ${ALGLIB_DOWNLOAD_DIR}/${ALGLIB_FILE})
+
+set(UNZIP_DIR "${ALGLIB_DOWNLOAD_DIR}/src")
+set(ALGLIB_SRC_DIR "${UNZIP_DIR}/alglib-cpp/src")
 
 if (NOT EXISTS ${ALGLIB_FULL_PATH})
     file(DOWNLOAD ${ALGLIB_URI} ${ALGLIB_FULL_PATH} SHOW_PROGRESS STATUS DL_STATUS)
@@ -65,51 +68,60 @@ if (NOT EXISTS ${ALGLIB_FULL_PATH})
     if (NOT status_code EQUAL 0)
         message(FATAL_ERROR "Error while downloading '${ALGLIB_URI}'.")
     endif()
+
+    file(REMOVE_RECURSE ${UNZIP_DIR})
+    file(MAKE_DIRECTORY ${UNZIP_DIR})
+    execute_process(COMMAND ${CMAKE_COMMAND} -E tar xfz ${ALGLIB_FULL_PATH} WORKING_DIRECTORY "${ALGLIB_DOWNLOAD_DIR}/src" RESULT_VARIABLE rv)
+
+    if (NOT rv EQUAL 0)
+        message(FATAL_ERROR "Error while extracting '${ALGLIB_FULL_PATH}'.")
+    endif ()
+
+    file(GLOB ALGLIB_HEADERS "${ALGLIB_SRC_DIR}/*.h")
+    file(GLOB ALGLIB_SOURCES "${ALGLIB_SRC_DIR}/*.cpp")
+
+    set(HEADER_OUTPUT_DIR "${ALGLIB_SRC_DIR}/headers")
+
+    file(MAKE_DIRECTORY ${HEADER_OUTPUT_DIR})
+
+    foreach (header ${ALGLIB_HEADERS})
+        get_filename_component(header_filename ${header} NAME)
+        file(RENAME ${header} "${HEADER_OUTPUT_DIR}/${header_filename}")
+    endforeach ()
+
+    foreach (source_file ${ALGLIB_SOURCES})
+        file(READ "${source_file}" file_content)
+        string(REGEX REPLACE "#include \"([^\"]+)\\.h\"" "#include \"headers/\\1.h\"" modified_content "${file_content}")
+        file(WRITE "${source_file}" "${modified_content}")
+    endforeach ()
+
+    file(TOUCH "${ALGLIB_DOWNLOAD_DIR}/success")
+else ()
+    while (NOT EXISTS "${ALGLIB_DOWNLOAD_DIR}/success")
+        message(STATUS "Waiting for ALGLIB to be available... ${num_files}")
+        execute_process(COMMAND ${CMAKE_COMMAND} -E sleep 2)
+    endwhile ()
+    file(REMOVE "${ALGLIB_DOWNLOAD_DIR}/success")
 endif()
 
-set (UNZIP_DIR "${ALGLIB_DOWNLOAD_DIR}/src")
-file(REMOVE_RECURSE ${UNZIP_DIR})
-file(MAKE_DIRECTORY ${UNZIP_DIR})
-execute_process(COMMAND ${CMAKE_COMMAND} -E tar xfz ${ALGLIB_FULL_PATH} WORKING_DIRECTORY "${ALGLIB_DOWNLOAD_DIR}/src" RESULT_VARIABLE rv)
+file(GLOB ALGLIB_SOURCES "${ALGLIB_SRC_DIR}/*.cpp")
 
-if(NOT rv EQUAL 0)
-  message(FATAL_ERROR "Error while extracting '${ALGLIB_FULL_PATH}'.")
-endif()
+add_library(${libraryname} STATIC ${ALGLIB_SOURCES})
 
-file(GLOB ALGLIB_HEADERS "${UNZIP_DIR}/cpp/src/*.h")
-file(GLOB ALGLIB_SOURCES "${UNZIP_DIR}/cpp/src/*.cpp")
+set_target_properties(graph-coloring PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 
-set(HEADER_OUTPUT_DIR "${UNZIP_DIR}/cpp/src/headers")
+include(GenerateExportHeader)
 
-file(MAKE_DIRECTORY ${HEADER_OUTPUT_DIR})
+GENERATE_EXPORT_HEADER(graph-coloring
+        BASE_NAME graph-coloring
+        EXPORT_MACRO_NAME GRAPH_COLORING_EXPORTS
+        EXPORT_FILE_NAME graph_coloring_exports.h
+        STATIC_DEFINE SHARED_EXPORTS_BUILT_AS_STATIC)
 
-foreach(header ${ALGLIB_HEADERS})
-    get_filename_component(header_filename ${header} NAME)
-    file(RENAME ${header} "${HEADER_OUTPUT_DIR}/${header_filename}")
-endforeach()
-
-foreach(source_file ${ALGLIB_SOURCES})
-    file(READ "${source_file}" file_content)
-    string(REGEX REPLACE "#include \"([^\"]+)\\.h\"" "#include \"headers/\\1.h\"" modified_content "${file_content}")
-    file(WRITE "${source_file}" "${modified_content}")
-endforeach()
-
-add_library(${libraryname} STATIC
-        ${UNZIP_DIR}/cpp/src/alglibinternal.cpp
-        ${UNZIP_DIR}/cpp/src/alglibmisc.cpp
-        ${UNZIP_DIR}/cpp/src/ap.cpp
-        ${UNZIP_DIR}/cpp/src/dataanalysis.cpp
-        ${UNZIP_DIR}/cpp/src/diffequations.cpp
-        ${UNZIP_DIR}/cpp/src/fasttransforms.cpp
-        ${UNZIP_DIR}/cpp/src/integration.cpp
-        ${UNZIP_DIR}/cpp/src/interpolation.cpp
-        ${UNZIP_DIR}/cpp/src/linalg.cpp
-        ${UNZIP_DIR}/cpp/src/optimization.cpp
-        ${UNZIP_DIR}/cpp/src/solvers.cpp
-        ${UNZIP_DIR}/cpp/src/specialfunctions.cpp
-        ${UNZIP_DIR}/cpp/src/statistics.cpp
-)
-set_property(TARGET ${libraryname} PROPERTY POSITION_INDEPENDENT_CODE ON)
+if (MSVC)
+    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
+    set(BUILD_SHARED_LIBS TRUE)
+endif ()
 
 set(COMPILER_OPTIONS)
 
@@ -128,34 +140,3 @@ elseif(UNIX)
         set(COMPILER_OPTIONS ${COMPILER_OPTIONS} -DAE_CPU=AE_INTEL)
     endif()
 endif()
-
-
-target_compile_options(${libraryname} PUBLIC ${COMPILER_OPTIONS})
-
-# install
-set_target_properties(${libraryname} PROPERTIES VERSION       ${ALGLIB_VERSION}
-                                                PUBLIC_HEADER "${ALGLIB_HEADERS}")
-
-target_include_directories(${libraryname} PUBLIC "$<BUILD_INTERFACE:${UNZIP_DIR}/cpp/src>"
-                                                 "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>")
-
-install(TARGETS ${libraryname}
-        EXPORT ${libraryname}
-        COMPONENT runtime
-        RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT bin
-        LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT shlib
-        ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT lib
-        PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-
-install(EXPORT ${libraryname}
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${libraryname})
-
-configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ALGLIB-config.cmake.in
-                              ${CMAKE_BINARY_DIR}/alglib-config.cmake
-                              INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ALGLIB)
-
-write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/alglib-configVersion.cmake VERSION ${ALGLIB_VERSION} COMPATIBILITY ExactVersion)
-
-install(FILES ${CMAKE_BINARY_DIR}/alglib-config.cmake ${CMAKE_BINARY_DIR}/alglib-configVersion.cmake DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ALGLIB)
-
-include(AddUninstallTarget)
