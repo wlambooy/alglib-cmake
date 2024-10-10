@@ -56,7 +56,7 @@ set(ALGLIB_VERSION_FILE "4.03.0" CACHE STRING "Version of ALGLIB.")
 string(REPLACE "\"" "" ALGLIB_VERSION ${ALGLIB_VERSION_FILE})
 set(ALGLIB_FILE alglib-${ALGLIB_VERSION_FILE}.cpp.gpl.tgz)
 set(ALGLIB_URI http://www.alglib.net/translator/re/${ALGLIB_FILE})
-set(ALGLIB_DOWNLOAD_DIR ${CMAKE_CURRENT_BINARY_DIR})
+set(ALGLIB_DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(ALGLIB_FULL_PATH ${ALGLIB_DOWNLOAD_DIR}/${ALGLIB_FILE})
 
 if (NOT EXISTS ${ALGLIB_FULL_PATH})
@@ -79,13 +79,19 @@ endif()
 file(GLOB ALGLIB_HEADERS "${UNZIP_DIR}/cpp/src/*.h")
 file(GLOB ALGLIB_SOURCES "${UNZIP_DIR}/cpp/src/*.cpp")
 
-set(HEADER_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/headers")
+set(HEADER_OUTPUT_DIR "${UNZIP_DIR}/cpp/src/headers")
 
 file(MAKE_DIRECTORY ${HEADER_OUTPUT_DIR})
 
 foreach(header ${ALGLIB_HEADERS})
     get_filename_component(header_filename ${header} NAME)
     file(RENAME ${header} "${HEADER_OUTPUT_DIR}/${header_filename}")
+endforeach()
+
+foreach(source_file ${ALGLIB_SOURCES})
+    file(READ "${source_file}" file_content)
+    string(REGEX REPLACE "#include \"([^\"]+)\\.h\"" "#include \"headers/\\1.h\"" modified_content "${file_content}")
+    file(WRITE "${source_file}" "${modified_content}")
 endforeach()
 
 add_library(${libraryname} STATIC ${ALGLIB_SOURCES})
@@ -139,4 +145,3 @@ write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/alglib-configVersio
 install(FILES ${CMAKE_BINARY_DIR}/alglib-config.cmake ${CMAKE_BINARY_DIR}/alglib-configVersion.cmake DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ALGLIB)
 
 include(AddUninstallTarget)
-
