@@ -84,7 +84,8 @@ set(HEADER_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/headers")
 file(MAKE_DIRECTORY ${HEADER_OUTPUT_DIR})
 
 foreach(header ${ALGLIB_HEADERS})
-    file(RENAME ${header} ${HEADER_OUTPUT_DIR})
+    get_filename_component(header_filename ${header} NAME)
+    file(RENAME ${header} "${HEADER_OUTPUT_DIR}/${header_filename}")
 endforeach()
 
 add_library(${libraryname} STATIC ${ALGLIB_SOURCES})
