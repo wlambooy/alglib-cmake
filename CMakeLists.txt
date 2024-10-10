@@ -79,6 +79,14 @@ endif()
 file(GLOB ALGLIB_HEADERS "${UNZIP_DIR}/cpp/src/*.h")
 file(GLOB ALGLIB_SOURCES "${UNZIP_DIR}/cpp/src/*.cpp")
 
+set(HEADER_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/headers")
+
+file(MAKE_DIRECTORY ${HEADER_OUTPUT_DIR})
+
+foreach(header ${ALGLIB_HEADERS})
+    file(MOVE ${header} DESTINATION ${HEADER_OUTPUT_DIR})
+endforeach()
+
 add_library(${libraryname} STATIC ${ALGLIB_SOURCES})
 set_property(TARGET ${libraryname} PROPERTY POSITION_INDEPENDENT_CODE ON)
 
