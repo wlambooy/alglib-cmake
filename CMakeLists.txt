@@ -121,7 +121,7 @@ install(TARGETS ${libraryname}
 install(EXPORT ${libraryname}
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${libraryname})
 
-configure_package_config_file(${CMAKE_SOURCE_DIR}/cmake/ALGLIB-config.cmake.in
+configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ALGLIB-config.cmake.in
                               ${CMAKE_BINARY_DIR}/alglib-config.cmake
                               INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ALGLIB)
 
