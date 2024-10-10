@@ -94,7 +94,21 @@ foreach(source_file ${ALGLIB_SOURCES})
     file(WRITE "${source_file}" "${modified_content}")
 endforeach()
 
-add_library(${libraryname} STATIC ${ALGLIB_SOURCES})
+add_library(${libraryname} STATIC
+        ${UNZIP_DIR}/cpp/src/alglibinternal.cpp
+        ${UNZIP_DIR}/cpp/src/alglibmisc.cpp
+        ${UNZIP_DIR}/cpp/src/ap.cpp
+        ${UNZIP_DIR}/cpp/src/dataanalysis.cpp
+        ${UNZIP_DIR}/cpp/src/diffequations.cpp
+        ${UNZIP_DIR}/cpp/src/fasttransforms.cpp
+        ${UNZIP_DIR}/cpp/src/integration.cpp
+        ${UNZIP_DIR}/cpp/src/interpolation.cpp
+        ${UNZIP_DIR}/cpp/src/linalg.cpp
+        ${UNZIP_DIR}/cpp/src/optimization.cpp
+        ${UNZIP_DIR}/cpp/src/solvers.cpp
+        ${UNZIP_DIR}/cpp/src/specialfunctions.cpp
+        ${UNZIP_DIR}/cpp/src/statistics.cpp
+)
 set_property(TARGET ${libraryname} PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 set(COMPILER_OPTIONS)
