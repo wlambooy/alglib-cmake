@@ -142,3 +142,32 @@ elseif (UNIX)
         set(COMPILER_OPTIONS ${COMPILER_OPTIONS} -DAE_CPU=AE_INTEL)
     endif ()
 endif ()
+
+target_compile_options(${libraryname} PUBLIC ${COMPILER_OPTIONS})
+
+# install
+set_target_properties(${libraryname} PROPERTIES VERSION ${ALGLIB_VERSION} PUBLIC_HEADER "${ALGLIB_HEADERS}")
+
+target_include_directories(${libraryname} PUBLIC "$<BUILD_INTERFACE:${UNZIP_DIR}/cpp/src>"
+        "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>")
+
+install(TARGETS ${libraryname}
+        EXPORT ${libraryname}
+        COMPONENT runtime
+        RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT bin
+        LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT shlib
+        ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT lib
+        PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+
+install(EXPORT ${libraryname}
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${libraryname})
+
+configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ALGLIB-config.cmake.in
+        ${CMAKE_BINARY_DIR}/alglib-config.cmake
+        INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ALGLIB)
+
+write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/alglib-configVersion.cmake VERSION ${ALGLIB_VERSION} COMPATIBILITY ExactVersion)
+
+install(FILES ${CMAKE_BINARY_DIR}/alglib-config.cmake ${CMAKE_BINARY_DIR}/alglib-configVersion.cmake DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ALGLIB)
+
+include(AddUninstallTarget)
