@@ -110,14 +110,14 @@ file(GLOB ALGLIB_SOURCES "${ALGLIB_SRC_DIR}/*.cpp")
 
 add_library(${libraryname} STATIC ${ALGLIB_SOURCES})
 
-set_target_properties(graph-coloring PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
+set_target_properties(ALGLIB PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 
 include(GenerateExportHeader)
 
-GENERATE_EXPORT_HEADER(graph-coloring
-        BASE_NAME graph-coloring
-        EXPORT_MACRO_NAME GRAPH_COLORING_EXPORTS
-        EXPORT_FILE_NAME graph_coloring_exports.h
+GENERATE_EXPORT_HEADER(ALGLIB
+        BASE_NAME ALGLIB
+        EXPORT_MACRO_NAME ALGLIB_EXPORTS
+        EXPORT_FILE_NAME ALGLIB_exports.h
         STATIC_DEFINE SHARED_EXPORTS_BUILT_AS_STATIC)
 
 if (MSVC)
