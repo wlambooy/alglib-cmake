@@ -8,7 +8,7 @@
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 3.21...3.29)
 
 project(ALGLIB VERSION 4.03.0)
 
